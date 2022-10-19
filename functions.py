@@ -76,7 +76,4 @@ def train(ids, X, Y, model, epochs, lr = 0.001):
         loss_plot.append(loss.item())
         loss.backward()
         optim.step()
-    return loss_plot
-
-def classify():
-    return 0
+    return loss_plot 

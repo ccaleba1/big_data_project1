@@ -26,8 +26,12 @@ del data
 
 print("Initializing Model")
 model = Model(X.shape[1], hidden_size)
+model.train()
 print("\nTraining Model...")
 loss = fc.train(ids, X.float(), Y.float(), model, epochs)
 
 plt.plot(loss)
 plt.show()
+
+print("Saving Model...")
+torch.save(model.state_dict(), "model.tensor")
