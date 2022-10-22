@@ -1,37 +1,52 @@
 import torch
-import wandb
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import functions as fc
+import tensorflow as tf
 import torch.nn as nn
+import pandas as pd
+from numpy import array
+from numpy import argmax
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.pipeline import Pipeline
 from model import Model
-from gensim.models import KeyedVectors
-from gensim.models import Word2Vec
 
-epochs = 1000
-hidden_size = 200
+
+epochs = 300
+hidden_size = 100
 
 print("Loading arrays...")
-arrs = np.load('ids.npz')
-ids = arrs['a1']
+data = pd.read_csv('df.csv')
+cls  = pd.read_csv('cls.csv').iloc[: , 1:]
 
-print("Creating tensors...")
-data = np.load('embeddings.npz')
-X = torch.from_numpy(data['a1'])
-Y = torch.from_numpy(data['a2'])
+vocab, pipe, corpus = fc.encodeData(data)
 
-del arrs
-del data
+X = torch.from_numpy(pipe['count'].transform(corpus).toarray().astype(np.float32))
+print(X.shape)
+
+print("Mapping Classes...")
+embed = {"Bart Simpson": [1, 0, 0, 0, 0],
+         "Homer Simpson": [0, 1, 0, 0, 0],
+         "Lisa Simpson": [0, 0, 0, 1, 0],
+         "Marge Simpson": [0, 0, 0, 0, 1],
+         "Other": [0, 0, 1, 0, 0]
+}
+Y = []
+for c in data['class']:
+    Y.append(embed[c])
+
+Y = torch.from_numpy(np.array(Y).astype(np.float32))
 
 print("Initializing Model")
 model = Model(X.shape[1], hidden_size)
 model.train()
 print("\nTraining Model...")
-loss = fc.train(ids, X.float(), Y.float(), model, epochs)
+loss = fc.train(X, Y, model, epochs)
 
 plt.plot(loss)
 plt.show()
 
 print("Saving Model...")
-torch.save(model.state_dict(), "model.tensor")
+torch.save(model, "model.tensor")

@@ -1,26 +1,27 @@
 import torch
 import torch.nn as nn
 
-from gensim import utils
-
 class Model(nn.Module):
 
     def __init__(self, embedding_dim, hidden_size):
         super(Model, self).__init__()
+        #lstm layer
+        self.lstm = nn.LSTM(embedding_dim,
+                           hidden_size,
+                           num_layers=1,
+                           bidirectional=True,
+                           batch_first=True)
 
-        self.lin1 = nn.Linear(embedding_dim, hidden_size)
-        self.relu = nn.ReLU()
+        #dense layer
+        self.hidden = nn.Linear(hidden_size, 5)
 
-        self.lin2 = nn.Linear(hidden_size, 8)
-
-        self.lin3 = nn.Linear(8, 2)
+        #activation function
         self.activation = nn.Sigmoid()
 
     def forward(self, text):
         out = text.view(-1, text.shape[1])
-        out = self.lin1(out.float())
-        out = self.relu(out)
-        out = self.lin2(out)
-        out = self.relu(out)
-        out = self.lin3(out)
+        output, (hidden, cell) = self.lstm(out)
+
+        out = self.hidden(output)
+
         return self.activation(out)

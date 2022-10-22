@@ -1,18 +1,14 @@
-import torch
-import wandb
-import pickle as pkl
 import functions as fc
+import pandas as pd
 import numpy as np
-
-
+import scipy
 import torch.nn as nn
 from model import Model
 
-epochs = 10
-hidden_size = 20
+data, text, cls = fc.getData()
 
-ids, classifications, embeddings = fc.getData()
-
-np.savez("embeddings.npz", a1=embeddings, a2=classifications)
-np.savez("ids.npz", a1=ids)
+print("Saving Arrays")
+data.to_csv("df.csv")
+text.to_csv("text.csv")
+cls.to_csv("cls.csv")
 print("Done!")
