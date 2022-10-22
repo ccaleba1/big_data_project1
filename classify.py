@@ -31,7 +31,7 @@ X = torch.from_numpy(pipe['count'].transform(corpus).toarray().astype(np.float32
 
 print("Reducing Large Dimensions...")
 pca = PCA(n_components = reduced_dim)
-X = torch.from_numpy(np.array(pca.fit_transform(X)).astype(np.float32)).to(device)
+X = torch.from_numpy(np.array(pca.fit_transform(X)).astype(np.float32))
 
 print("Mapping Classes...")
 embed = {"Bart Simpson": [1., 0., 0., 0., 0.],
@@ -42,7 +42,7 @@ embed = {"Bart Simpson": [1., 0., 0., 0., 0.],
 }
 
 print("Loading Model...\n")
-model = torch.load('model.tensor')
+model = torch.load('model.tensor', map_location=torch.device('cpu'))
 model.eval()
 
 predictions = []
