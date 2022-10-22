@@ -6,7 +6,19 @@ import functions as fc
 import torch.nn as nn
 from model import Model
 from tqdm import tqdm
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.pipeline import Pipeline
+from sklearn.decomposition import PCA
 import functions as fc
+
+if torch.cuda.is_available():
+    dev = "cuda:0"
+else:
+    dev = "cpu"
+
+device = torch.device(dev)
+reduced_dim = 100
 
 print("Loading arrays...")
 ids, X = fc.getTesting()
@@ -16,7 +28,10 @@ data = pd.read_csv('df.csv')
 vocab, pipe, corpus = fc.encodeData(X, data)
 
 X = torch.from_numpy(pipe['count'].transform(corpus).toarray().astype(np.float32))
-Y = []
+
+print("Reducing Large Dimensions...")
+pca = PCA(n_components = reduced_dim)
+X = torch.from_numpy(np.array(pca.fit_transform(X)).astype(np.float32)).to(device)
 
 print("Mapping Classes...")
 embed = {"Bart Simpson": [1., 0., 0., 0., 0.],
@@ -33,7 +48,7 @@ model.eval()
 predictions = []
 
 outputs = model(X)
-print(outputs.shape)
+
 print("Classifying...")
 max_val = outputs.argmax(1)
 out = torch.zeros(outputs.shape).scatter (1, max_val.unsqueeze(1), 1)

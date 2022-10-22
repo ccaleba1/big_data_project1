@@ -21,9 +21,9 @@ else:
 
 device = torch.device(dev)
 
-epochs = 1000
+epochs = 700
 hidden_size = 100
-reduced_dim = 500
+reduced_dim = 100
 print("Loading arrays...")
 data = pd.read_csv('df.csv')
 cls  = pd.read_csv('cls.csv').iloc[: , 1:]
@@ -58,7 +58,7 @@ print("\nTraining Model...")
 loss = fc.train(X, Y, model, epochs)
 
 plt.plot(loss)
-plt.savefig('700_epochs.png')
+plt.savefig('3000_epochs.png')
 
 print("Saving Model...")
 torch.save(model, "model.tensor")
