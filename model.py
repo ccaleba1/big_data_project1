@@ -8,12 +8,12 @@ class Model(nn.Module):
         #lstm layer
         self.lstm = nn.LSTM(embedding_dim,
                            hidden_size,
-                           num_layers=1,
+                           num_layers=2,
                            bidirectional=True,
                            batch_first=True)
 
         #dense layer
-        self.hidden = nn.Linear(hidden_size, 5)
+        self.hidden = nn.Linear(hidden_size*2, 5)
 
         #activation function
         self.activation = nn.Sigmoid()
