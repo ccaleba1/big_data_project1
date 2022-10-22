@@ -21,9 +21,9 @@ else:
 
 device = torch.device(dev)
 
-epochs = 1000
+epochs = 10000
 hidden_size = 100
-reduced_dim = 500
+reduced_dim = 200
 print("Loading arrays...")
 data = pd.read_csv('df.csv')
 cls  = pd.read_csv('cls.csv').iloc[: , 1:]
