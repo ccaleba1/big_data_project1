@@ -28,15 +28,7 @@ print("Loading arrays...")
 data = pd.read_csv('df.csv')
 cls  = pd.read_csv('cls.csv').iloc[: , 1:]
 
-vocab, pipe, corpus = fc.encodeData(data)
-
-X = torch.from_numpy(pipe['count'].transform(corpus).toarray().astype(np.float32))
-
-print("Reducing Large Dimensions...")
-pca = PCA(n_components = reduced_dim)
-X = torch.from_numpy(np.array(pca.fit_transform(X)).astype(np.float32)).to(device)
-
-
+vocab, X, corpus = fc.encodeData(data)
 
 print("Mapping Classes...")
 embed = {"Bart Simpson": [1, 0, 0, 0, 0],
