@@ -13,6 +13,11 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline
 from model import Model
 from tqdm import tqdm
+import tensorflow_hub as hub
+import tensorflow.compat.v1 as tf2
+tf2.disable_eager_execution()
+
+
 
 def getData():
     data = pd.read_csv("unmcs567-project1/simpsons_dataset-training.tsv",
@@ -58,18 +63,23 @@ def encodeData(data, sec_data=pd.DataFrame()):
 
     print("Encoding Data")
 
-    preprocessor = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3")
-    encoder_inputs = preprocessor(corpus)
-    encoder = hub.KerasLayer(
-    "https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/4",
-    trainable=True)
-    outputs = encoder(encoder_inputs)
-    pooled_output = outputs["pooled_output"]
-    sequence_output = outputs["sequence_output"]
+    # Load pre trained ELMo model
+    elmo = hub.Module("https://tfhub.dev/google/elmo/3", trainable=True)
 
-    embedding_model = tf.keras.Model(text_input, pooled_output)
-    embeddings = embedding_model(np.array(corpus))
-    print(corpus)
+    # create an instance of ELMo
+    embeddings = elmo(
+        corpus,
+        signature="default",
+        as_dict=True)["elmo"]
+    init = tf2.initialize_all_variables()
+    sess = tf2.Session()
+    sess.run(init)
+
+    # Print word embeddings for word WATCH in given two sentences
+    print('Word embeddings for word WATCH in first sentence')
+    print(sess.run(embeddings[0][3]))
+    print('Word embeddings for word WATCH in second sentence')
+    print(sess.run(embeddings[1][5]))
 
     vocab = list(vocab.keys())
 
