@@ -1,25 +1,12 @@
 import torch
-import functions as fc
 import numpy as np
-import torch.nn as nn
-import torch
-import tensorflow as tf
-import tensorflow_hub as hub
 import pandas as pd
 from tensorflow import keras
 import tensorflow_text as text
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.pipeline import Pipeline
-from mod import Model
 from tqdm import tqdm
-import tensorflow_hub as hub
-import tensorflow.compat.v1 as tf2
-from sklearn.svm import LinearSVC
-from sklearn.model_selection import cross_val_score
-from sklearn.metrics import confusion_matrix
-from sklearn import metrics
 
 def getData():
     data = pd.read_csv("unmcs567-project1/simpsons_dataset-training.tsv",
@@ -56,14 +43,9 @@ def encodeTest(x_test, corpus, Y):
                         stop_words='english')
 
     #transform each complaint into a vector
-    Y = Y[:x_test.shape[0]] #uncomment if testing on validation set
-    features = tfidf.fit(corpus.iloc[:x_test.shape[0]]) #uncomment if testing on validation set
-    fitted_features = features.transform(corpus.iloc[:x_test.shape[0]]) #uncomment if testing on validation set
-
-    #transform each complaint into a vector
-    #Y=Y #comment if testing on validation set
-    #features = tfidf.fit(corpus) #comment if testing on validation set
-    #fitted_features = features.transform(corpus) #comment if testing on validation set
+    Y=Y
+    features = tfidf.fit(corpus)
+    fitted_features = features.transform(corpus)
 
     #returning a fitted testing set that matches model params of training set
     return features.transform(x_test), fitted_features, Y
