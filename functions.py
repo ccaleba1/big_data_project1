@@ -10,97 +10,63 @@ from tensorflow import keras
 import tensorflow_text as text
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline
-from model import Model
+from mod import Model
 from tqdm import tqdm
 import tensorflow_hub as hub
 import tensorflow.compat.v1 as tf2
-tf2.disable_eager_execution()
-
-
+from sklearn.svm import LinearSVC
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import confusion_matrix
+from sklearn import metrics
 
 def getData():
     data = pd.read_csv("unmcs567-project1/simpsons_dataset-training.tsv",
            sep="\t")
 
     print("Processing Data...")
-    text = data['text'].str.lower().str.replace(r'[^\w\s]+', '', regex=True).str.split(expand=True)
+    text = data['text'].str.lower().str.replace(r'[^\w\s]+', '', regex=True)
 
-    unique = data['class'].unique()
-    cls = pd.get_dummies(
-        unique,
-    )
     print("Returning Data...")
-    return data, text, cls
+    return data, text
 
-def encodeData(data, sec_data=pd.DataFrame()):
-
-    if not sec_data.empty:
-        corpus = sec_data['text'].str.lower().str.replace(r'[^\w\s]+', '', regex=True)
-        vocab = {}
-        for e in corpus:
-            for word in e.split():
-                vocab[word] = 1
-
-        vocab = list(vocab.keys())
-        print("Encoding Data")
-        encoder = hub.KerasLayer(
-        "https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/4",
-        trainable=True)
-        outputs = encoder(corpus)
-        embeddings = outputs["pooled_output"]
-        print(embeddings)
-        sequence_output = outputs["sequence_output"]
-
-
-        return vocab, embeddings, corpus
-
+def encodeData(data):
+    #text is now lowercase and each row is a non-tokenized sentence
     corpus = data['text'].str.lower().str.replace(r'[^\w\s]+', '', regex=True)
-
-    vocab = {}
-    for e in corpus:
-        vocab[e] = 1
 
     print("Encoding Data")
 
-    # Load pre trained ELMo model
-    elmo = hub.Module("https://tfhub.dev/google/elmo/3", trainable=True)
+    tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5,
+                        ngram_range=(1, 2),
+                        stop_words='english')
 
-    # create an instance of ELMo
-    embeddings = elmo(
-        corpus,
-        signature="default",
-        as_dict=True)["elmo"]
-    init = tf2.initialize_all_variables()
-    sess = tf2.Session()
-    sess.run(init)
+    #transform each sentence into a vector
+    features = tfidf.fit_transform(corpus).toarray()
 
-    # Print word embeddings for word WATCH in given two sentences
-    print('Word embeddings for word WATCH in first sentence')
-    print(sess.run(embeddings[0][3]))
-    print('Word embeddings for word WATCH in second sentence')
-    print(sess.run(embeddings[1][5]))
+    return features
 
-    vocab = list(vocab.keys())
+def encodeTest(x_test, corpus, Y):
+    #function used to encode test data for final classification
+    corpus = corpus.str.lower().str.replace(r'[^\w\s]+', '', regex=True)
+    print("Encoding Data")
 
-    # pipe = Pipeline([('count', CountVectorizer(vocabulary=vocab)),
-    #               ('tfid', TfidfTransformer())]).fit(corpus)
+    tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5,
+                        ngram_range=(1, 2),
+                        stop_words='english')
 
-    return vocab, embeddings, corpus
+    #transform each complaint into a vector
+    Y = Y[:x_test.shape[0]] #uncomment if testing on validation set
+    features = tfidf.fit(corpus.iloc[:x_test.shape[0]]) #uncomment if testing on validation set
+    fitted_features = features.transform(corpus.iloc[:x_test.shape[0]]) #uncomment if testing on validation set
 
-def train(X, Y, model, epochs, lr = 0.001):
-    loss_plot = []
-    optim = torch.optim.Adam(model.parameters(), lr=lr)
-    loss_func = nn.BCELoss()
+    #transform each complaint into a vector
+    #Y=Y #comment if testing on validation set
+    #features = tfidf.fit(corpus) #comment if testing on validation set
+    #fitted_features = features.transform(corpus) #comment if testing on validation set
 
-    for epoch in tqdm(range(epochs)):
-        optim.zero_grad()
-        predictions = model(X)
-        loss = loss_func(predictions, Y)
-        loss_plot.append(loss.item())
-        loss.backward()
-        optim.step()
-    return loss_plot
+    #returning a fitted testing set that matches model params of training set
+    return features.transform(x_test), fitted_features, Y
 
 def getTesting():
     data = pd.read_csv("unmcs567-project1/simpsons_dataset-testing.tsv",
