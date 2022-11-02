@@ -5,10 +5,9 @@ import scipy
 import torch.nn as nn
 from model import Model
 
-data, text, cls = fc.getData()
+data, text = fc.getData()
 
 print("Saving Arrays")
 data.to_csv("df.csv")
 text.to_csv("text.csv")
-cls.to_csv("cls.csv")
 print("Done!")

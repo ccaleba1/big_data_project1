@@ -1,12 +1,11 @@
 import torch
-import functions as fc
 import numpy as np
-import torch.nn as nn
 import pandas as pd
+from tensorflow import keras
+import tensorflow_text as text
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.pipeline import Pipeline
-from model import Model
+from sklearn.feature_extraction.text import TfidfVectorizer
 from tqdm import tqdm
 
 def getData():
@@ -14,56 +13,42 @@ def getData():
            sep="\t")
 
     print("Processing Data...")
-    text = data['text'].str.lower().str.replace(r'[^\w\s]+', '', regex=True).str.split(expand=True)
+    text = data['text'].str.lower().str.replace(r'[^\w\s]+', '', regex=True)
 
-    unique = data['class'].unique()
-    cls = pd.get_dummies(
-        unique,
-    )
     print("Returning Data...")
-    return data, text, cls
+    return data, text
 
-def encodeData(data, sec_data=pd.DataFrame()):
-
-    if not sec_data.empty:
-        corpus = sec_data['text'].str.lower().str.replace(r'[^\w\s]+', '', regex=True)
-        vocab = {}
-        for e in corpus:
-            for word in e.split():
-                vocab[word] = 1
-
-        vocab = list(vocab.keys())
-
-        pipe = Pipeline([('count', CountVectorizer(vocabulary=vocab)),
-                      ('tfid', TfidfTransformer())]).fit(data)
-        return vocab, pipe, corpus
-
+def encodeData(data):
+    #text is now lowercase and each row is a non-tokenized sentence
     corpus = data['text'].str.lower().str.replace(r'[^\w\s]+', '', regex=True)
-    vocab = {}
-    for e in corpus:
-        for word in e.split():
-            vocab[word] = 1
 
-    vocab = list(vocab.keys())
+    print("Encoding Data")
 
-    pipe = Pipeline([('count', CountVectorizer(vocabulary=vocab)),
-                  ('tfid', TfidfTransformer())]).fit(corpus)
+    tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5,
+                        ngram_range=(1, 2),
+                        stop_words='english')
 
-    return vocab, pipe, corpus
+    #transform each sentence into a vector
+    features = tfidf.fit_transform(corpus).toarray()
 
-def train(X, Y, model, epochs, lr = 0.001):
-    loss_plot = []
-    optim = torch.optim.Adam(model.parameters(), lr=lr)
-    loss_func = nn.BCELoss()
+    return features
 
-    for epoch in tqdm(range(epochs)):
-        optim.zero_grad()
-        predictions = model(X)
-        loss = loss_func(predictions, Y)
-        loss_plot.append(loss.item())
-        loss.backward()
-        optim.step()
-    return loss_plot
+def encodeTest(x_test, corpus, Y):
+    #function used to encode test data for final classification
+    corpus = corpus.str.lower().str.replace(r'[^\w\s]+', '', regex=True)
+    print("Encoding Data")
+
+    tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5,
+                        ngram_range=(1, 2),
+                        stop_words='english')
+
+    #transform each complaint into a vector
+    Y=Y
+    features = tfidf.fit(corpus)
+    fitted_features = features.transform(corpus)
+
+    #returning a fitted testing set that matches model params of training set
+    return features.transform(x_test), fitted_features, Y
 
 def getTesting():
     data = pd.read_csv("unmcs567-project1/simpsons_dataset-testing.tsv",

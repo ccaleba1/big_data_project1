@@ -10,7 +10,7 @@ class Model(nn.Module):
                            hidden_size,
                            num_layers=2,
                            bidirectional=True,
-                           batch_first=True)
+                           batch_first=False)
 
         #dense layer
         self.hidden = nn.Linear(hidden_size*2, 5)
@@ -19,8 +19,7 @@ class Model(nn.Module):
         self.activation = nn.Sigmoid()
 
     def forward(self, text):
-        out = text.view(-1, text.shape[1])
-        output, (hidden, cell) = self.lstm(out)
+        output, (hidden, cell) = self.lstm(text)
 
         out = self.hidden(output)
 
